@@ -5,7 +5,8 @@ setup(
     version='0.1',
     py_modules=['md2pptx'],
     install_requires=[
-        'Click',
+        'click',
+        'python-pptx'
     ],
     entry_points='''
         [console_scripts]

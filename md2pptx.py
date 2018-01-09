@@ -12,6 +12,18 @@ logger.addHandler(handler)
 logger.propagate = False
 
 
+def class2dic(attr):
+    d = {}
+    for k, v in attr:
+        if k == "class":
+            for cls in v.split():
+                ek, ev = cls.split("-")
+                d[ek] = float(ev)
+        else:
+            d[k] = v
+    return d
+
+
 class MyHTMLParser(HTMLParser):
     def __init__(self):
         super(MyHTMLParser, self).__init__()
@@ -21,10 +33,10 @@ class MyHTMLParser(HTMLParser):
         self.ln = 0        # layout number
 
     def handle_starttag(self, tag, attrs):
-        attr_dict = dict(attrs)
+        attr_dict = class2dic(attrs)
         if tag == "h1" or tag == "h2":
             hln = int(tag[-1]) - 1
-            ln = int(attr_dict.get("class", hln))
+            ln = int(attr_dict.get("layout", hln))
             self.ln = ln
             slide = self.prs.slides.add_slide(self.prs.slide_layouts[ln])
             self.slide = slide
@@ -157,6 +169,7 @@ def cli(input, output):
     md = Markdown(extensions=['markdown.extensions.attr_list'])
     parser = MyHTMLParser()
     md_txt = open(input, "r").read()
+    print(md.convert(md_txt))
     parser.feed(md.convert(md_txt).replace("\n", ""))  # ???
     parser.close(output)
 

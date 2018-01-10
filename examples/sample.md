@@ -21,4 +21,5 @@ _This is a third paragraph that's Italic_
 Image example {:.layout-6}
 --------------------------
 
-![shizubar](examples/shizubar.png)
+![shizubar](examples/shizubar.png){:.left-1 .top-1 .width-1}
+![shizubar](examples/shizubar.png){:.left-3 .top-1}

@@ -29,7 +29,7 @@ class MyHTMLParser(HTMLParser):
         super(MyHTMLParser, self).__init__()
         self.prs = Presentation()
         self.tags = []
-        self.slide = None  # current slide
+        self.focus = None  # current item
         self.ln = 0        # layout number
 
     def handle_starttag(self, tag, attrs):
@@ -40,6 +40,7 @@ class MyHTMLParser(HTMLParser):
             self.ln = ln
             slide = self.prs.slides.add_slide(self.prs.slide_layouts[ln])
             self.slide = slide
+            self.focus = slide
             self.tags.append(tag)
         else:
             self.tags.append(tag)
@@ -68,9 +69,20 @@ class MyHTMLParser(HTMLParser):
 
     def handle_starttag_layout6(self, tag, attr_dict):
         if tag == "img":
+            print(attr_dict)
             img_path = attr_dict.get("src", None)
-            left = top = Inches(1)
-            self.slide.shapes.add_picture(img_path, left, top)
+            left = Inches(attr_dict.get("left", 1))
+            top = Inches(attr_dict.get("top", 1))
+            height = attr_dict.get("height", None)
+            width = attr_dict.get("width", None)
+            if height is None and width is None:
+                self.focus.shapes.add_picture(img_path, left, top)
+            elif height is None:
+                self.focus.shapes.add_picture(img_path, left, top, width=Inches(width))
+            elif width is None:
+                self.focus.shapes.add_picture(img_path, left, top, height=Inches(height))
+            else:
+                self.focus.shapes.add_picture(img_path, left, top, height=Inches(height), width=Inches(width))
         else:
             self.tags.append(tag)
 
@@ -92,29 +104,29 @@ class MyHTMLParser(HTMLParser):
     def handle_data_layout0(self, data):
         tag = self.tags.pop()
         if tag == "h1":
-                self.slide.shapes.title.text = data
+                self.focus.shapes.title.text = data
         elif tag == "p":
-            self.slide.placeholders[1].text = data
+            self.focus.placeholders[1].text = data
         else:
             print("Not Implemented...")
 
     def handle_data_layout1(self, data):
         tag = self.tags.pop()
         if tag == "h2":
-            self.slide.shapes.title.text = data
+            self.focus.shapes.title.text = data
         elif tag == "h3":
-            p = self.slide.shapes.placeholders[1].text_frame.add_paragraph()
+            p = self.focus.shapes.placeholders[1].text_frame.add_paragraph()
             p.text = data
         elif tag == "h4":
-            p = self.slide.shapes.placeholders[1].text_frame.add_paragraph()
+            p = self.focus.shapes.placeholders[1].text_frame.add_paragraph()
             p.text = data
             p.level = 1
         elif tag == "h5":
-            p = self.slide.shapes.placeholders[1].text_frame.add_paragraph()
+            p = self.focus.shapes.placeholders[1].text_frame.add_paragraph()
             p.text = data
             p.level = 2
         elif tag == "h6":
-            p = self.slide.shapes.placeholders[1].text_frame.add_paragraph()
+            p = self.focus.shapes.placeholders[1].text_frame.add_paragraph()
             p.text = data
             p.level = 3
         else:
@@ -141,7 +153,7 @@ class MyHTMLParser(HTMLParser):
         if tag == "h2":
             pass
         elif tag == "p":
-            tb = self.slide.shapes.add_textbox(Inches(1), Inches(1), Inches(1), Inches(1))
+            tb = self.focus.shapes.add_textbox(Inches(1), Inches(1), Inches(1), Inches(1))
             tb.text_frame.text = data
         else:
             print("Not Implemented...")
@@ -169,7 +181,7 @@ def cli(input, output):
     md = Markdown(extensions=['markdown.extensions.attr_list'])
     parser = MyHTMLParser()
     md_txt = open(input, "r").read()
-    print(md.convert(md_txt))
+    logger.debug(md.convert(md_txt))
     parser.feed(md.convert(md_txt).replace("\n", ""))  # ???
     parser.close(output)
 

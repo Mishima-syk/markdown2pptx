@@ -22,6 +22,6 @@ clone this repo and python setup.py install
 History
 -------
 
-0.1 (2018-1-7)
+0.0 (2018-1-XX)
 ~~~~~~~~~~~~~~~~~~
 * First release

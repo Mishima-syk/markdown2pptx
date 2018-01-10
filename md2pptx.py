@@ -2,6 +2,7 @@ from markdown import Markdown
 from html.parser import HTMLParser
 from pptx import Presentation
 from pptx.util import Inches, Pt
+import pptx
 import click
 from logging import getLogger, StreamHandler, DEBUG
 logger = getLogger(__name__)
@@ -29,8 +30,11 @@ class MyHTMLParser(HTMLParser):
         super(MyHTMLParser, self).__init__()
         self.prs = Presentation()
         self.tags = []
-        self.focus = None  # current item
-        self.ln = 0        # layout number
+        self.focus = None    # current item
+        self.ln = 0          # layout number
+        self.header = False  # TF BF marker
+        self.slide = None    # current slide
+        self.pg = None       # current paragraph
 
     def handle_starttag(self, tag, attrs):
         attr_dict = class2dic(attrs)
@@ -46,60 +50,19 @@ class MyHTMLParser(HTMLParser):
             self.tags.append(tag)
         getattr(self, "handle_starttag_layout{}".format(self.ln))(tag, attr_dict)
 
-    def handle_starttag_layout0(self, tag, attrs):
-            pass
-
-    def handle_starttag_layout1(self, tag, attrs):
-        if tag == "h2":
-            pass
-        else:
-            self.tags.append(tag)
-
-    def handle_starttag_layout2(self, tag, attr_dict):
-            print("Not Implemented...")
-
-    def handle_starttag_layout3(self, tag, attr_dict):
-            print("Not Implemented...")
-
-    def handle_starttag_layout4(self, tag, attr_sict):
-            print("Not Implemented...")
-
-    def handle_starttag_layout5(self, tag, attr_dict):
-            print("Not Implemented...")
-
-    def handle_starttag_layout6(self, tag, attr_dict):
-        if tag == "img":
-            print(attr_dict)
-            img_path = attr_dict.get("src", None)
-            left = Inches(attr_dict.get("left", 1))
-            top = Inches(attr_dict.get("top", 1))
-            height = attr_dict.get("height", None)
-            width = attr_dict.get("width", None)
-            if height is None and width is None:
-                self.focus.shapes.add_picture(img_path, left, top)
-            elif height is None:
-                self.focus.shapes.add_picture(img_path, left, top, width=Inches(width))
-            elif width is None:
-                self.focus.shapes.add_picture(img_path, left, top, height=Inches(height))
-            else:
-                self.focus.shapes.add_picture(img_path, left, top, height=Inches(height), width=Inches(width))
-        else:
-            self.tags.append(tag)
-
-    def handle_starttag_layout7(self, tag, attr_dict):
-            print("Not Implemented...")
-
-    def handle_starttag_layout8(self, tag, attr_dict):
-            print("Not Implemented...")
-
-    def handle_starttag_layout9(self, tag, attr_dict):
-            print("Not Implemented...")
-
     def handle_endtag(self, tag):
-        pass
+        getattr(self, "handle_endtag_layout{}".format(self.ln))(tag)
 
     def handle_data(self, data):
         getattr(self, "handle_data_layout{}".format(self.ln))(data)
+
+    # layout 0 #
+
+    def handle_starttag_layout0(self, tag, attrs):
+            pass
+
+    def handle_endtag_layout0(self, tag):
+        pass
 
     def handle_data_layout0(self, data):
         tag = self.tags.pop()
@@ -109,6 +72,17 @@ class MyHTMLParser(HTMLParser):
             self.focus.placeholders[1].text = data
         else:
             print("Not Implemented...")
+
+    # layout 1 #
+
+    def handle_starttag_layout1(self, tag, attrs):
+        if tag == "h2":
+            pass
+        else:
+            self.tags.append(tag)
+
+    def handle_endtag_layout1(self, tag):
+        pass
 
     def handle_data_layout1(self, data):
         tag = self.tags.pop()
@@ -132,39 +106,148 @@ class MyHTMLParser(HTMLParser):
         else:
             print("Not Implemented...")
 
+    # layout 2 #
+
+    def handle_starttag_layout2(self, tag, attr_dict):
+            print("Not Implemented...")
+
+    def handle_endtag_layout2(self, tag):
+        pass
+
     def handle_data_layout2(self, data):
         tag = self.tags.pop()
         print("Not Implemented...")
+
+    # layout 3 #
+
+    def handle_starttag_layout3(self, tag, attr_dict):
+            print("Not Implemented...")
+
+    def handle_endtag_layout3(self, tag):
+        pass
 
     def handle_data_layout3(self, data):
         tag = self.tags.pop()
         print("Not Implemented...")
 
+    # layout 4 #
+
+    def handle_starttag_layout4(self, tag, attr_sict):
+            print("Not Implemented...")
+
+    def handle_endtag_layout4(self, tag):
+        pass
+
     def handle_data_layout4(self, data):
         tag = self.tags.pop()
         print("Not Implemented...")
 
+    # layout 5 #
+
+    def handle_starttag_layout5(self, tag, attr_dict):
+            print("Not Implemented...")
+
+    def handle_endtag_layout5(self, tag):
+        pass
+
     def handle_data_layout5(self, data):
         tag = self.tags.pop()
         print("Not Implemented...")
+
+    # layout 6 #
+
+    def handle_starttag_layout6(self, tag, attr_dict):
+        if tag == "img":
+            print(attr_dict)
+            img_path = attr_dict.get("src", None)
+            left = Inches(attr_dict.get("left", 1))
+            top = Inches(attr_dict.get("top", 1))
+            height = attr_dict.get("height", None)
+            width = attr_dict.get("width", None)
+            if height is None and width is None:
+                self.slide.shapes.add_picture(img_path, left, top)
+            elif height is None:
+                self.slide.shapes.add_picture(img_path, left, top, width=Inches(width))
+            elif width is None:
+                self.slide.shapes.add_picture(img_path, left, top, height=Inches(height))
+            else:
+                self.slide.shapes.add_picture(img_path, left, top, height=Inches(height), width=Inches(width))
+        elif tag == "p":
+            left = attr_dict.get("left", None)
+            top = attr_dict.get("top", None)
+            right = attr_dict.get("right", None)
+            bottom = attr_dict.get("bottom", None)
+            fontsize = attr_dict.get("fontsize", None)
+            if left is None and top is None and right is None and bottom is None:
+                if isinstance(self.focus, pptx.text.text.TextFrame):
+                    self.pg = self.focus.add_paragraph()
+                    if fontsize is not None:
+                        self.pg.font.size = Pt(int(fontsize))
+                self.tags.append(tag)
+            else:
+                tb = self.slide.shapes.add_textbox(Inches(left),
+                                                   Inches(top),
+                                                   Inches(right),
+                                                   Inches(bottom))
+                self.focus = tb.text_frame
+                self.header = True
+                self.tags.append(tag)
+        else:
+            self.tags.append(tag)
 
     def handle_data_layout6(self, data):
         tag = self.tags.pop()
         if tag == "h2":
             pass
         elif tag == "p":
-            tb = self.focus.shapes.add_textbox(Inches(1), Inches(1), Inches(1), Inches(1))
-            tb.text_frame.text = data
+            if isinstance(self.focus, pptx.text.text.TextFrame):
+                if self.header:
+                    self.focus.text = data
+                else:
+                    self.pg.text = data
+        elif tag == "strong":
+            p = self.focus.add_paragraph()
+            p.text = data
+            p.font.bold = True
         else:
             print("Not Implemented...")
+
+    def handle_endtag_layout6(self, tag):
+        if tag == "p":
+            if self.header:
+                self.header = False
+
+    # layout 7 #
+
+    def handle_starttag_layout7(self, tag, attr_dict):
+            print("Not Implemented...")
+
+    def handle_endtag_layout7(self, tag):
+        pass
 
     def handle_data_layout7(self, data):
         tag = self.tags.pop()
         print("Not Implemented...")
 
+    # layout 8 #
+
+    def handle_starttag_layout8(self, tag, attr_dict):
+            print("Not Implemented...")
+
+    def handle_endtag_layout8(self, tag):
+        pass
+
     def handle_data_layout8(self, data):
         tag = self.tags.pop()
         print("Not Implemented...")
+
+    # layout 9 #
+
+    def handle_starttag_layout9(self, tag, attr_dict):
+            print("Not Implemented...")
+
+    def handle_endtag_layout9(self, tag):
+        pass
 
     def handle_data_layout9(self, data):
         tag = self.tags.pop()

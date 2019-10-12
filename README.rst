@@ -2,7 +2,7 @@
 markdown2pptx
 =============
 
-`markdown2pptx` is PowerPoint slide generator from markdown txt
+`markdown2pptx` is a PowerPoint slide generator from markdown txt
 
 Requirements
 ------------
